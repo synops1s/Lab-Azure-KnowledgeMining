@@ -1,0 +1,446 @@
+{
+	"info": {
+		"_postman_id": "10506beb-8161-41f4-ad4c-dfa0f6a63974",
+		"name": "Image Skill Lab",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Azure Search - 01 - Delete Indexer",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "api-key",
+						"value": "{{ApiKey}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://{{SearchService}}.search.windows.net/indexers/demoindexer?api-version=2019-05-06",
+					"protocol": "https",
+					"host": [
+						"{{SearchService}}",
+						"search",
+						"windows",
+						"net"
+					],
+					"path": [
+						"indexers",
+						"demoindexer"
+					],
+					"query": [
+						{
+							"key": "api-version",
+							"value": "2019-05-06"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Azure Search - 02 - Delete Index Schema",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "api-key",
+						"type": "text",
+						"value": "{{ApiKey}}"
+					}
+				],
+				"url": {
+					"raw": "https://{{SearchService}}.search.windows.net/indexes/demoindex?api-version=2019-05-06",
+					"protocol": "https",
+					"host": [
+						"{{SearchService}}",
+						"search",
+						"windows",
+						"net"
+					],
+					"path": [
+						"indexes",
+						"demoindex"
+					],
+					"query": [
+						{
+							"key": "api-version",
+							"value": "2019-05-06"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Azure Search - 03 - Delete Skillset",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "api-key",
+						"type": "text",
+						"value": "{{ApiKey}}"
+					}
+				],
+				"url": {
+					"raw": "https://{{SearchService}}.search.windows.net/skillsets/demoskillset?api-version=2019-05-06",
+					"protocol": "https",
+					"host": [
+						"{{SearchService}}",
+						"search",
+						"windows",
+						"net"
+					],
+					"path": [
+						"skillsets",
+						"demoskillset"
+					],
+					"query": [
+						{
+							"key": "api-version",
+							"value": "2019-05-06"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Azure Search - 04 - Create Skillset",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "api-key",
+						"type": "text",
+						"value": "{{ApiKey}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"description\":\r\n  \"Extract OCR, entities, detect language and extract key-phrases, with MERGE AND SPLITS\",\r\n  \"skills\":\r\n  [\r\n     {\r\n        \"description\": \"Extract text (plain and structured) from image.\",\r\n        \"@odata.type\": \"#Microsoft.Skills.Vision.OcrSkill\",\r\n        \"context\": \"/document/normalized_images/*\",\r\n        \"defaultLanguageCode\": \"en\",\r\n        \"detectOrientation\": true,\r\n        \"inputs\": [\r\n          {\r\n            \"name\": \"image\",\r\n            \"source\": \"/document/normalized_images/*\"\r\n          }\r\n        ],\r\n        \"outputs\": [\r\n          {\r\n            \"name\": \"text\", \"targetName\": \"myOcrText\"\r\n          }\r\n        ]\r\n    },\r\n    {\r\n      \"@odata.type\": \"#Microsoft.Skills.Text.MergeSkill\",\r\n      \"description\": \"Create mergedText, which includes all the textual representation of each image inserted at the right location in the content field.\",\r\n      \"context\": \"/document\",\r\n      \"insertPreTag\": \" \",\r\n      \"insertPostTag\": \" \",\r\n      \"inputs\": [\r\n        {\r\n          \"name\":\"text\", \"source\": \"/document/content\"\r\n        },\r\n        {\r\n          \"name\": \"itemsToInsert\", \"source\": \"/document/normalized_images/*/myOcrText\"\r\n        },\r\n        {\r\n          \"name\":\"offsets\", \"source\": \"/document/normalized_images/*/contentOffset\"\r\n        }\r\n      ],\r\n      \"outputs\": [\r\n        {\r\n          \"name\": \"mergedText\", \"targetName\" : \"mergedText\"\r\n        }\r\n      ]\r\n    },\r\n       {\r\n      \"@odata.type\": \"#Microsoft.Skills.Text.LanguageDetectionSkill\",\r\n      \"inputs\": [\r\n        {\r\n          \"name\": \"text\", \"source\": \"/document/mergedText\"\r\n        }\r\n      ],\r\n      \"outputs\": [\r\n        {\r\n          \"name\": \"languageCode\",\r\n          \"targetName\": \"languageCode\"\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"@odata.type\": \"#Microsoft.Skills.Text.SplitSkill\",\r\n      \"textSplitMode\" : \"pages\",\r\n      \"maximumPageLength\": 4000,\r\n      \"inputs\": [\r\n      {\r\n        \"name\": \"text\",\r\n        \"source\": \"/document/mergedText\"\r\n      },\r\n      {\r\n        \"name\": \"languageCode\",\r\n        \"source\": \"/document/languageCode\"\r\n      }\r\n    ],\r\n    \"outputs\": [\r\n      {\r\n            \"name\": \"textItems\",\r\n            \"targetName\": \"pages\"\r\n      }\r\n    ]\r\n  },\r\n  {\r\n      \"@odata.type\": \"#Microsoft.Skills.Text.KeyPhraseExtractionSkill\",\r\n      \"context\": \"/document/pages/*\",\r\n      \"inputs\": [\r\n        {\r\n          \"name\": \"text\", \"source\": \"/document/pages/*\"\r\n        },\r\n        {\r\n          \"name\":\"languageCode\", \"source\": \"/document/languageCode\"\r\n        }\r\n      ],\r\n      \"outputs\": [\r\n        {\r\n          \"name\": \"keyPhrases\",\r\n          \"targetName\": \"keyPhrases\"\r\n        }\r\n      ]\r\n    },\r\n     {\r\n      \"@odata.type\": \"#Microsoft.Skills.Text.EntityRecognitionSkill\",\r\n      \"categories\": [ \"Organization\" ],\r\n      \"defaultLanguageCode\": \"en\",\r\n      \"context\": \"/document/pages/*\",\r\n      \"inputs\": [\r\n        {\r\n          \"name\": \"text\", \"source\": \"/document/pages/*\"\r\n        }\r\n      ],\r\n      \"outputs\": [\r\n        {\r\n          \"name\": \"organizations\", \"targetName\": \"organizations\"\r\n        }\r\n      ]\r\n    }\r\n  ],\r\n  \"cognitiveServices\": {\r\n        \"@odata.type\": \"#Microsoft.Azure.Search.CognitiveServicesByKey\",\r\n        \"description\": \"my-cog-serv\",\r\n        \"key\": \"{{CognitiveServiceAccountKey}}\"\r\n  }\r\n}"
+				},
+				"url": {
+					"raw": "https://{{SearchService}}.search.windows.net/skillsets/demoskillset?api-version=2019-05-06",
+					"protocol": "https",
+					"host": [
+						"{{SearchService}}",
+						"search",
+						"windows",
+						"net"
+					],
+					"path": [
+						"skillsets",
+						"demoskillset"
+					],
+					"query": [
+						{
+							"key": "api-version",
+							"value": "2019-05-06"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Azure Search - 05 - Create Index Schema",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "api-key",
+						"value": "{{ApiKey}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"fields\": [\r\n    {\r\n      \"name\": \"id\",\r\n      \"type\": \"Edm.String\",\r\n      \"key\": true,\r\n      \"searchable\": true,\r\n      \"filterable\": false,\r\n      \"facetable\": false,\r\n      \"sortable\": true\r\n    },\r\n     {\r\n      \"name\": \"blob_uri\",\r\n      \"type\": \"Edm.String\",\r\n      \"searchable\": true,\r\n      \"filterable\": false,\r\n      \"facetable\": false,\r\n      \"sortable\": true\r\n    },\r\n    {\r\n      \"name\": \"content\",\r\n      \"type\": \"Edm.String\",\r\n      \"sortable\": false,\r\n      \"searchable\": true,\r\n      \"filterable\": false,\r\n      \"facetable\": false\r\n    },\r\n    {\r\n      \"name\": \"languageCode\",\r\n      \"type\": \"Edm.String\",\r\n      \"searchable\": true,\r\n      \"filterable\": false,\r\n      \"facetable\": false\r\n    },\r\n    {\r\n      \"name\": \"keyPhrases\",\r\n      \"type\": \"Collection(Edm.String)\",\r\n      \"searchable\": true,\r\n      \"filterable\": false,\r\n      \"facetable\": false\r\n    },\r\n    {\r\n      \"name\": \"organizations\",\r\n      \"type\": \"Collection(Edm.String)\",\r\n      \"searchable\": true,\r\n      \"sortable\": false,\r\n      \"filterable\": false,\r\n      \"facetable\": false\r\n    },\r\n    {\r\n      \"name\": \"myOcrText\",\r\n      \"type\": \"Collection(Edm.String)\",\r\n      \"searchable\": true,\r\n      \"filterable\": false,\r\n      \"facetable\": false\r\n    }\r\n  ]\r\n}"
+				},
+				"url": {
+					"raw": "https://{{SearchService}}.search.windows.net/indexes/demoindex?api-version=2019-05-06",
+					"protocol": "https",
+					"host": [
+						"{{SearchService}}",
+						"search",
+						"windows",
+						"net"
+					],
+					"path": [
+						"indexes",
+						"demoindex"
+					],
+					"query": [
+						{
+							"key": "api-version",
+							"value": "2019-05-06"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Azure Search - 06 - Create Indexer",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "api-key",
+						"value": "{{ApiKey}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"dataSourceName\" : \"demodata\",\r\n  \"targetIndexName\" : \"demoindex\",\r\n  \"skillsetName\" : \"demoskillset\",\r\n  \"fieldMappings\" : [\r\n        {\r\n          \"sourceFieldName\" : \"metadata_storage_path\",\r\n          \"targetFieldName\" : \"id\",\r\n          \"mappingFunction\" :\r\n            { \"name\" : \"base64Encode\" }\r\n        },\r\n        {\r\n          \"sourceFieldName\" : \"content\",\r\n          \"targetFieldName\" : \"content\"\r\n        },\r\n        {\r\n          \"sourceFieldName\" : \"metadata_storage_path\",\r\n          \"targetFieldName\" : \"blob_uri\"\r\n        }\r\n   ],\r\n  \"outputFieldMappings\" :\r\n  [\r\n        {\r\n          \"sourceFieldName\" : \"/document/pages/*/organizations/*\",\r\n          \"targetFieldName\" : \"organizations\"\r\n        },\r\n        {\r\n          \"sourceFieldName\" : \"/document/pages/*/keyPhrases/*\",\r\n          \"targetFieldName\" : \"keyPhrases\"\r\n        },\r\n        {\r\n            \"sourceFieldName\": \"/document/languageCode\",\r\n            \"targetFieldName\": \"languageCode\"\r\n        },\r\n        {\r\n            \"sourceFieldName\": \"/document/normalized_images/*/myOcrText\",\r\n            \"targetFieldName\": \"myOcrText\"\r\n        }\r\n  ],\r\n  \"parameters\":\r\n  {\r\n    \"maxFailedItems\":-1,\r\n    \"maxFailedItemsPerBatch\":-1,\r\n    \"configuration\":\r\n    {\r\n      \"dataToExtract\": \"contentAndMetadata\",\r\n       \"imageAction\": \"generateNormalizedImages\"\r\n    }\r\n  }\r\n}"
+				},
+				"url": {
+					"raw": "https://{{SearchService}}.search.windows.net/indexers/demoindexer?api-version=2019-05-06",
+					"protocol": "https",
+					"host": [
+						"{{SearchService}}",
+						"search",
+						"windows",
+						"net"
+					],
+					"path": [
+						"indexers",
+						"demoindexer"
+					],
+					"query": [
+						{
+							"key": "api-version",
+							"value": "2019-05-06"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Azure Search - 07 - Get Indexer Status",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "api-key",
+						"type": "text",
+						"value": "{{ApiKey}}"
+					}
+				],
+				"url": {
+					"raw": "https://{{SearchService}}.search.windows.net/indexers/demoindexer/status?api-version=2019-05-06",
+					"protocol": "https",
+					"host": [
+						"{{SearchService}}",
+						"search",
+						"windows",
+						"net"
+					],
+					"path": [
+						"indexers",
+						"demoindexer",
+						"status"
+					],
+					"query": [
+						{
+							"key": "api-version",
+							"value": "2019-05-06"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Azure Search - 08 - Query Test",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "api-key",
+						"type": "text",
+						"value": "{{ApiKey}}"
+					}
+				],
+				"url": {
+					"raw": "https://{{SearchService}}.search.windows.net/indexes/demoindex/docs?search=*&$select=blob_uri,organizations,languageCode,keyPhrases&api-version=2019-05-06",
+					"protocol": "https",
+					"host": [
+						"{{SearchService}}",
+						"search",
+						"windows",
+						"net"
+					],
+					"path": [
+						"indexes",
+						"demoindex",
+						"docs"
+					],
+					"query": [
+						{
+							"key": "search",
+							"value": "*"
+						},
+						{
+							"key": "$select",
+							"value": "blob_uri,organizations,languageCode,keyPhrases"
+						},
+						{
+							"key": "api-version",
+							"value": "2019-05-06"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Azure Search - 09 - Query OCR Text",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "api-key",
+						"type": "text",
+						"value": "{{ApiKey}}"
+					}
+				],
+				"url": {
+					"raw": "https://{{SearchService}}.search.windows.net/indexes/demoindex/docs?search=*&$select=blob_uri,myOcrText&api-version=2019-05-06",
+					"protocol": "https",
+					"host": [
+						"{{SearchService}}",
+						"search",
+						"windows",
+						"net"
+					],
+					"path": [
+						"indexes",
+						"demoindex",
+						"docs"
+					],
+					"query": [
+						{
+							"key": "search",
+							"value": "*"
+						},
+						{
+							"key": "$select",
+							"value": "blob_uri,myOcrText"
+						},
+						{
+							"key": "api-version",
+							"value": "2019-05-06"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "889c0c96-92c1-4815-b9bd-d801db70b24b",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "41676fca-243a-4968-af63-a298f16979b6",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "60dded27-fca3-4ba5-8418-12a69891ee4a",
+			"key": "SearchService",
+			"value": "fujlabsas01",
+			"type": "string"
+		},
+		{
+			"id": "8bc4dc91-22b4-4b94-961b-3a94f6ef05c4",
+			"key": "ApiKey",
+			"value": "3251309DDF4E5F2F1C6A47F5766C5359",
+			"type": "string"
+		},
+		{
+			"id": "26ffe0ef-255a-4670-9be3-93bb44542201",
+			"key": "CognitiveServiceAccountKey",
+			"value": "8e9b1cd45c0f41cb8a0534c5d118b1f1",
+			"type": "string"
+		},
+		{
+			"id": "55548433-c58f-479b-b68f-90c279103df3",
+			"key": "StorageAccountName",
+			"value": "fujlabsas01sa",
+			"type": "string"
+		},
+		{
+			"id": "b2c6ec6d-b1c2-43f7-8f3f-3709ef775dd9",
+			"key": "StorageAccountKey",
+			"value": "g9qVsE5tci/aUposJ0sg+WioUqZk1JKlsIz4y3rHtf2tQ8bMfFT5/9GDvQZ9HM09TP78tNezkGcwqO6VDCdcJg==",
+			"type": "string"
+		}
+	],
+	"protocolProfileBehavior": {}
+}
